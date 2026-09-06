@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright 2024-2026 the original author or authors.
   ~
@@ -58,6 +58,18 @@
         <dependency>
             <groupId>io.agentscope</groupId>
             <artifactId>agentscope-extensions-model-dashscope</artifactId>
+        </dependency>
+
+        <!-- OpenAI-compatible model provider -->
+        <dependency>
+            <groupId>io.agentscope</groupId>
+            <artifactId>agentscope-extensions-model-openai</artifactId>
+        </dependency>
+
+        <!-- Studio telemetry (OTLP tracing → Langfuse / AgentScope Studio) -->
+        <dependency>
+            <groupId>io.agentscope</groupId>
+            <artifactId>agentscope-extensions-studio</artifactId>
         </dependency>
 
         <!-- JdbcStore-backed BaseStore for remote filesystem routes -->

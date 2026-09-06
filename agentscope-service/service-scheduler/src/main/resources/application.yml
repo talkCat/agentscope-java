@@ -10,10 +10,10 @@ spring:
   # shared builder database; session lifecycle stays on the control plane.
   # --------------------------------------------------------------------------
   datasource:
-    url: ${BUILDER_DB_URL:jdbc:postgresql://localhost:5432/builder?currentSchema=dp}
+    url: ${BUILDER_DB_URL:jdbc:postgresql://10.26.0.3:5432/builder?currentSchema=dp}
     driver-class-name: ${BUILDER_DB_DRIVER:org.postgresql.Driver}
-    username: ${BUILDER_DB_USER:builder}
-    password: ${BUILDER_DB_PASSWORD:builder}
+    username: ${BUILDER_DB_USER:admin}
+    password: ${BUILDER_DB_PASSWORD:mypassword}
 
   jpa:
     open-in-view: false

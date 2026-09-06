@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2024-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,11 +35,17 @@ import io.agentscope.builder.web.share.JpaAgentVisibilityResolver;
 import io.agentscope.builder.web.workspace.SharedWorkspacePaths;
 import io.agentscope.core.model.Model;
 import io.agentscope.core.state.AgentStateStore;
+import io.agentscope.core.tracing.TracerRegistry;
+import io.agentscope.core.tracing.telemetry.TelemetryTracer;
 import io.agentscope.extensions.model.dashscope.DashScopeChatModel;
+import io.agentscope.extensions.model.openai.OpenAIChatModel;
 import io.agentscope.extensions.mysql.store.JdbcStore;
 import io.agentscope.harness.agent.filesystem.remote.store.BaseStore;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +74,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  *       Hands work queue) shared with the scheduler;
  *   <li>{@link SharedWorkspacePaths} — resolves the platform-wide shared workspace root
  *       (identical layout to the control plane).
+ *   <li>{@link TelemetryTracer} — OTLP-based tracing to Langfuse or AgentScope Studio.
  * </ul>
  */
 @Configuration
@@ -84,14 +91,76 @@ public class DataPlaneConfig {
     @Value("${builder.dashscope.stream:${claw.dashscope.stream:true}}")
     private boolean dashscopeStream;
 
+    @Value("${builder.openai.api-key:${OPENAI_API_KEY:}}")
+    private String openaiApiKey;
+
+    @Value("${builder.openai.base-url:${OPENAI_BASE_URL:https://api.openai.com/v1}}")
+    private String openaiBaseUrl;
+
+    @Value("${builder.openai.model-name:${OPENAI_MODEL_NAME:gpt-4o}}")
+    private String openaiModelName;
+
+    @Value("${builder.openai.stream:true}")
+    private boolean openaiStream;
+
+    // ---- Langfuse / OTLP tracing ----
+    @Value("${builder.langfuse.enabled:false}")
+    private boolean langfuseEnabled;
+
+    @Value("${builder.langfuse.public-key:}")
+    private String langfusePublicKey;
+
+    @Value("${builder.langfuse.secret-key:}")
+    private String langfuseSecretKey;
+
+    @Value("${builder.langfuse.host:https://cloud.langfuse.com}")
+    private String langfuseHost;
+
     /**
-     * Ensures a shared {@link ObjectMapper} is available for {@code ManagedJsonHelper} and API
-     * layers when Jackson auto-configuration does not expose one (WebFlux / Boot 4 setups).
+     * Initializes OpenTelemetry tracing to Langfuse via OTLP HTTP exporter.
+     * When enabled and credentials are configured, all agent/model/tool calls
+     * will appear as traces in Langfuse.
+     */
+    @PostConstruct
+    public void initLangfuseTracing() {
+        if (!langfuseEnabled || langfusePublicKey.isBlank() || langfuseSecretKey.isBlank()) {
+            log.info("Langfuse tracing disabled (builder.langfuse.enabled=false or missing keys)");
+            return;
+        }
+
+        String otlpEndpoint = langfuseHost + "/api/public/otel/v1/traces";
+        String authHeader = "Basic "
+                + Base64.getEncoder()
+                        .encodeToString((langfusePublicKey + ":" + langfuseSecretKey).getBytes());
+
+        TelemetryTracer tracer = TelemetryTracer.builder()
+                .endpoint(otlpEndpoint)
+                .addHeader("Authorization", authHeader)
+                .build();
+
+        TracerRegistry.register(tracer);
+        log.info("Langfuse tracing initialized: endpoint={}", otlpEndpoint);
+    }
+
+    @PreDestroy
+    public void shutdownLangfuseTracing() {
+        TracerRegistry.resetToNoop();
+    }
+
+    // ------------------------------------------------------------------
+    // Bean definitions
+    // ------------------------------------------------------------------
+
+    /**
+     * Ensures a shared {@link ObjectMapper} is available for {@code ManagedJsonHelper}
+     * when Jackson auto-configuration does not expose one (e.g., WebFlux / Boot 4).
      */
     @Bean
     @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
-        return new ObjectMapper().findAndRegisterModules();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+        return mapper;
     }
 
     /**
@@ -111,6 +180,22 @@ public class DataPlaneConfig {
                 .build();
     }
 
+    /**
+     * Creates an {@link OpenAIChatModel} bean when {@code builder.openai.api-key} (or
+     * {@code OPENAI_API_KEY}) is configured. Takes priority over DashScope.
+     */
+    @Bean
+    @ConditionalOnMissingBean(Model.class)
+    @ConditionalOnExpression("'${builder.openai.api-key:${OPENAI_API_KEY:}}' != ''")
+    public Model openaiModel() {
+        log.info("Building OpenAIChatModel: model={} baseUrl={}", openaiModelName, openaiBaseUrl);
+        return OpenAIChatModel.builder()
+                .apiKey(openaiApiKey)
+                .modelName(openaiModelName)
+                .baseUrl(openaiBaseUrl)
+                .stream(openaiStream)
+                .build();
+    }
     /**
      * Default {@link BaseStore} backed by the Spring-managed {@link DataSource}. All planes point
      * at the same JDBC database, so definition files written by the control plane are visible

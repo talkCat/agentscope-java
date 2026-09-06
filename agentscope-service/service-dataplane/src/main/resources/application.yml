@@ -1,4 +1,4 @@
-server:
+﻿server:
   port: ${BUILDER_DATA_PORT:8082}
 
 spring:
@@ -10,10 +10,10 @@ spring:
   # must be accessed via ControlPlaneClient, never by SELECT.
   # --------------------------------------------------------------------------
   datasource:
-    url: ${BUILDER_DB_URL:jdbc:postgresql://localhost:5432/builder?currentSchema=dp}
+    url: ${BUILDER_DB_URL:jdbc:postgresql://10.26.0.3:5432/builder?currentSchema=dp}
     driver-class-name: ${BUILDER_DB_DRIVER:org.postgresql.Driver}
-    username: ${BUILDER_DB_USER:builder}
-    password: ${BUILDER_DB_PASSWORD:builder}
+    username: ${BUILDER_DB_USER:admin}
+    password: ${BUILDER_DB_PASSWORD:mypassword}
 
   jpa:
     open-in-view: false
@@ -99,6 +99,22 @@ builder:
     api-key: ${DASHSCOPE_API_KEY:}
     model-name: ${BUILDER_MODEL_NAME:${CLAW_MODEL_NAME:qwen-max}}
     stream: true
+
+  # ---- OpenAI-compatible model ----
+  openai:
+    api-key: "12345"
+    base-url: "https://miyun.archermind.com/v1"
+    model-name: ${OPENAI_MODEL_NAME:qwq}
+    stream: true
+
+  # ---- Langfuse OTLP tracing ----
+  # Get your keys from https://cloud.langfuse.com → Settings → API Keys
+  # Set enabled=true and fill in your public/secret keys below.
+  langfuse:
+    enabled: true
+    public-key: "pk-lf-286a023f-f66a-414e-b1a8-175bed842db4"
+    secret-key: "sk-lf-f3c99d7c-6dd2-43a5-b0af-3de5b82a124d"
+    host: "http://10.26.0.3:3001"
 
 management:
   endpoints:
