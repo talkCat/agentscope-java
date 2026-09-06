@@ -1,5 +1,5 @@
 ﻿server:
-  port: ${BUILDER_DATA_PORT:8082}
+  port: ${BUILDER_DATA_PORT:15082}
 
 spring:
   application:
@@ -57,7 +57,7 @@ builder:
   internal-token: ${BUILDER_INTERNAL_TOKEN:}
 
   # Control plane (aistiod) base URL for session/environment resolve APIs.
-  control-plane-url: ${BUILDER_CONTROL_URL:http://localhost:8081}
+  control-plane-url: ${BUILDER_CONTROL_URL:http://localhost:15081}
 
   # aistio data-plane contract + optional Operate self-registration.
   # Off by default: this process hosts Managed agent runs; it is not an agent itself.

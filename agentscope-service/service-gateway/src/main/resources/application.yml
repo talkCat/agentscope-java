@@ -1,5 +1,5 @@
-server:
-  port: ${BUILDER_GATEWAY_PORT:8080}
+﻿server:
+  port: ${BUILDER_GATEWAY_PORT:15080}
 
 spring:
   application:
@@ -100,9 +100,9 @@ spring:
 # Cross-plane wiring — same property family as the scheduler plane.
 # --------------------------------------------------------------------------
 builder:
-  control-plane-url: ${BUILDER_CONTROL_URL:http://localhost:8081}
-  data-plane-url: ${BUILDER_DATA_URL:http://localhost:8082}
-  scheduler-plane-url: ${BUILDER_SCHEDULER_URL:http://localhost:8083}
+  control-plane-url: ${BUILDER_CONTROL_URL:http://localhost:15081}
+  data-plane-url: ${BUILDER_DATA_URL:http://localhost:15082}
+  scheduler-plane-url: ${BUILDER_SCHEDULER_URL:http://localhost:15083}
 
 management:
   endpoints:

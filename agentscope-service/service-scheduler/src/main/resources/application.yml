@@ -1,5 +1,5 @@
-server:
-  port: ${BUILDER_SCHEDULER_PORT:8083}
+﻿server:
+  port: ${BUILDER_SCHEDULER_PORT:15083}
 
 spring:
   application:
@@ -43,8 +43,8 @@ builder:
   internal-token: ${BUILDER_INTERNAL_TOKEN:}
 
   # ---- Cross-plane wiring ----
-  control-plane-url: ${BUILDER_CONTROL_URL:http://localhost:8081}
-  data-plane-url: ${BUILDER_DATA_URL:http://localhost:8082}
+  control-plane-url: ${BUILDER_CONTROL_URL:http://localhost:15081}
+  data-plane-url: ${BUILDER_DATA_URL:http://localhost:15082}
 
   scheduler:
     # Channel config fetch from the control plane at startup.
